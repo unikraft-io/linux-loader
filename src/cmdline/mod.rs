@@ -355,9 +355,7 @@ impl Cmdline {
         // size is always smaller or equal to the cmdline capacity provided in constructor)
         let mut cmdline_size = self.boot_args.len() + 1; // for null terminator
 
-        if !self.init_args.is_empty() {
-            cmdline_size += INIT_ARGS_SEPARATOR.len() + self.init_args.len();
-        }
+        cmdline_size += INIT_ARGS_SEPARATOR.len() + self.init_args.len();
 
         cmdline_size
     }
@@ -386,8 +384,6 @@ impl Cmdline {
             CString::new("".to_string()).map_err(|_| Error::NullTerminator)
         } else if self.boot_args.is_empty() {
             Err(Error::NoBootArgsInserted)
-        } else if self.init_args.is_empty() {
-            CString::new(self.boot_args.to_string()).map_err(|_| Error::NullTerminator)
         } else {
             CString::new(format!(
                 "{}{}{}",
