@@ -483,6 +483,10 @@ impl Cmdline {
             ),
         };
 
+        if boot_args.ends_with(INIT_ARGS_SEPARATOR.trim_end()) {
+            boot_args = &boot_args[..boot_args.len() - INIT_ARGS_SEPARATOR.trim().len()];
+        }
+
         boot_args = boot_args.trim();
         init_args = init_args.trim();
 
