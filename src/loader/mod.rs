@@ -139,7 +139,7 @@ impl From<pe::Error> for Error {
 /// This specifies where the kernel is loading and passes additional
 /// information for the rest of the boot process to be completed by
 /// the VMM.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct KernelLoaderResult {
     /// Address in the guest memory where the kernel image starts to be loaded.
     pub kernel_load: GuestAddress,
@@ -155,7 +155,11 @@ pub struct KernelLoaderResult {
     /// <https://xenbits.xen.org/docs/unstable/misc/pvh.html>
     #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
     pub pvh_boot_cap: elf::PvhBootCapability,
+    /// Program headers.
+    #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+    pub phdrs: Vec<crate::loader_gen::elf::Elf64_Phdr>,
 }
+
 
 /// Trait that specifies kernel image loading support.
 pub trait KernelLoader {

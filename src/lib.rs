@@ -104,7 +104,7 @@ pub mod loader;
 
 #[allow(clippy::undocumented_unsafe_blocks)]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-mod loader_gen;
+pub mod loader_gen;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub use loader_gen::*;
 
