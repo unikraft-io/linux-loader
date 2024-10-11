@@ -75,7 +75,7 @@ pub struct elf64_hdr {
 pub type Elf64_Ehdr = elf64_hdr;
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct elf64_phdr {
     pub p_type: Elf64_Word,
     pub p_flags: Elf64_Word,

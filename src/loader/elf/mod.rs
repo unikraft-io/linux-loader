@@ -249,7 +249,7 @@ impl KernelLoader for Elf {
         }
 
         // Read in each section pointed to by the program headers.
-        for phdr in phdrs {
+        for phdr in &phdrs {
             if phdr.p_type != elf::PT_LOAD || phdr.p_filesz == 0 {
                 if phdr.p_type == elf::PT_NOTE {
                     // The PVH boot protocol currently requires that the kernel is loaded at
@@ -293,6 +293,7 @@ impl KernelLoader for Elf {
 
         // elf image has no setup_header which is defined for bzImage
         loader_result.setup_header = None;
+        loader_result.phdrs = phdrs;
 
         Ok(loader_result)
     }
