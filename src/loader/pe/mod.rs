@@ -222,6 +222,18 @@ impl KernelLoader for PE {
             .checked_add(mem_size as GuestUsize)
             .ok_or(KernelLoaderError::MemoryOverflow)?;
 
+        let image_size = u64::from_le(image_header.image_size);
+        loader_result.phdrs.push(crate::loader_gen::elf::elf64_phdr {
+            p_type: crate::loader_gen::elf::PT_LOAD,
+            p_flags: 0,
+            p_offset: 0,
+            p_vaddr: mem_offset.raw_value(),
+            p_paddr: mem_offset.raw_value(),
+            p_filesz: kernel_size as u64,
+            p_memsz: mem_size,
+            p_align: 0,
+        });
+
         Ok(loader_result)
     }
 }
