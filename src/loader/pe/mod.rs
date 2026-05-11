@@ -230,6 +230,18 @@ impl KernelLoader for PE {
             return Err(KernelLoaderError::MemoryOverflow);
         }
 
+        #[cfg(feature = "elf")]
+        loader_result.phdrs.push(crate::loader_gen::elf::elf64_phdr {
+            p_type: crate::loader_gen::elf::PT_LOAD,
+            p_flags: 0,
+            p_offset: 0,
+            p_vaddr: mem_offset.raw_value(),
+            p_paddr: mem_offset.raw_value(),
+            p_filesz: kernel_size as u64,
+            p_memsz: mem_size,
+            p_align: 0,
+        });
+
         Ok(loader_result)
     }
 }
