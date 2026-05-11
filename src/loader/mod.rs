@@ -160,7 +160,7 @@ pub struct KernelLoaderResult {
     #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
     pub pvh_boot_cap: elf::PvhBootCapability,
     /// Program headers.
-    #[cfg(all(feature = "elf", any(target_arch = "x86", target_arch = "x86_64")))]
+    #[cfg(feature = "elf")]
     pub phdrs: Vec<crate::loader_gen::elf::Elf64_Phdr>,
 }
 
