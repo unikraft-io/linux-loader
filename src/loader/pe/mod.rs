@@ -196,10 +196,39 @@ impl KernelLoader for PE {
             .read_exact_volatile_from(mem_offset, kernel_image, kernel_size)
             .map_err(|_| Error::ReadKernelImage)?;
 
+        // According to https://www.kernel.org/doc/Documentation/arm64/booting.txt
+        // the image_size field is defined as the "effective image size". That can
+        // be larger than the on-disk image size, and is used to determine how much
+        // memory to reserve for the kernel. Moreover:
+        //
+        // "Prior to v3.17, the endianness of text_offset was not specified.  In
+        //  these cases image_size is zero and text_offset is 0x80000 in the
+        //  endianness of the kernel.  Where image_size is non-zero image_size is
+        //  little-endian and must be respected.  Where image_size is zero,
+        //  text_offset can be assumed to be 0x80000.
+        //  ...
+        //  When image_size is zero, a bootloader should attempt to keep as much
+        //  memory as possible free for use by the kernel immediately after the
+        //  end of the kernel image. The amount of space required will vary
+        //  depending on selected features, and is effectively unbound."
+        //
+        // So in old kernels `kernel_end` cannot be used for the purposes described
+        // in the declaration of KernelLoader (i.e. the address to load initrd / dtb).
+        let image_size = u64::from_le(image_header.image_size);
+        let mem_size = std::cmp::max(kernel_size as u64, image_size);
+
         loader_result.kernel_end = mem_offset
             .raw_value()
-            .checked_add(kernel_size as GuestUsize)
+            .checked_add(mem_size as GuestUsize)
             .ok_or(KernelLoaderError::MemoryOverflow)?;
+
+        let end = loader_result
+            .kernel_end
+            .checked_sub(1)
+            .ok_or(KernelLoaderError::MemoryOverflow)?;
+        if GuestAddress(end) > guest_mem.last_addr() {
+            return Err(KernelLoaderError::MemoryOverflow);
+        }
 
         Ok(loader_result)
     }
@@ -240,7 +269,7 @@ mod tests {
     use vm_memory::{Address, GuestAddress};
     type GuestMemoryMmap = vm_memory::GuestMemoryMmap<()>;
 
-    const MEM_SIZE: u64 = 0x100_0000;
+    const MEM_SIZE: u64 = 0x200_0000;
 
     fn create_guest_mem() -> GuestMemoryMmap {
         GuestMemoryMmap::from_ranges(&[(GuestAddress(0x0), (MEM_SIZE as usize))]).unwrap()
@@ -265,7 +294,7 @@ mod tests {
         let loader_result =
             PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
         assert_eq!(loader_result.kernel_load.raw_value(), 0x280000);
-        assert_eq!(loader_result.kernel_end, 0x281000);
+        assert_eq!(loader_result.kernel_end, 0x415000);
 
         // Attempt to load the kernel at an address that is not aligned to 2MB boundary
         let kernel_offset = GuestAddress(0x0030_0000);
@@ -293,7 +322,7 @@ mod tests {
         let loader_result =
             PE::load(&gm, Some(kernel_addr), &mut Cursor::new(&image), None).unwrap();
         assert_eq!(loader_result.kernel_load.raw_value(), 0x600000);
-        assert_eq!(loader_result.kernel_end, 0x601000);
+        assert_eq!(loader_result.kernel_end, 0x150f000);
 
         // Attempt to load the kernel at an address that is not aligned to 2MB boundary
         let kernel_offset = GuestAddress(0x0030_0000);
